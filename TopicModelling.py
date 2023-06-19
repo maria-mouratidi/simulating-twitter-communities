@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[3]:
+# In[1]:
 
 
 #Import needed modules
@@ -19,7 +19,7 @@ import networkx as nx
 from nltk.metrics import jaccard_distance
 
 
-# In[4]:
+# In[3]:
 
 
 #Load data
@@ -35,7 +35,7 @@ tweets_bag = flatten_list(tweets_clean) #put the dataset's tokens in one list
 
 # ## Topic Extraction
 
-# In[5]:
+# In[4]:
 
 
 #Randomness is controlled for reproduciability of the results
@@ -43,7 +43,7 @@ random_seed = 2
 np.random.seed(random_seed)
 
 
-# In[6]:
+# In[5]:
 
 
 #Map tokens to integer id's
@@ -53,7 +53,7 @@ corpus = [dictionary.doc2bow(tweets_bag)]
 coherence_list = []
 
 
-# In[10]:
+# In[6]:
 
 
 #GRID SEARCH: Find optimal amount of topics
@@ -64,22 +64,23 @@ for n in range(1,11):
     coherence_list.append(coherence)
 
 
-# In[11]:
+# In[39]:
 
 
 #Plot coherence scores
 plt.xlabel('number of topics')
 plt.ylabel('coherence score (C_v)')
-plt.title('LDA performance')
+#plt.title('LDA performance', fontsize=16)
 plt.xticks(range(1,11))
 plt.grid(color='w', linestyle='solid')
 plt.tick_params(colors='gray', direction='out')
 plt.plot(range(1,11), coherence_list, color='#468499')
-plt.savefig("LDA_gridsearch.png")
+plt.savefig("LDA_gridsearch.pdf")
+plt.rcParams['font.size'] = 14
 plt.show()
 
 
-# In[7]:
+# In[33]:
 
 
 #Run the best model
@@ -87,7 +88,7 @@ n_topics = 5 #manually select num_topics
 lda = LdaMulticore(corpus=corpus, num_topics=n_topics, id2word=dictionary, eta='auto', random_state=2)
 
 
-# In[8]:
+# In[34]:
 
 
 topics = {}
@@ -106,7 +107,7 @@ termlist = list(set(termlist)) #keep only unique terms
 
 # ## Tweets Segmentation
 
-# In[9]:
+# In[35]:
 
 
 #Distribute tweets among the discovered topics
@@ -129,7 +130,7 @@ for id, tweet in enumerate(topic_dist):
         clusters[cluster].append(id)  #add the tweet id to the right cluster(s).
 
 
-# In[10]:
+# In[36]:
 
 
 #Count how many tweets occurred in more than one clusters
@@ -142,7 +143,7 @@ print(count)
 
 # ## Visualizations: Topic frequency and measuring overlap
 
-# In[11]:
+# In[40]:
 
 
 #Topic Population frequency statistics
@@ -161,15 +162,16 @@ for bar in plot:
 
 plt.xlabel('n Topic')
 plt.ylabel('num of tweets')
-plt.title('Topic frequency')
+#plt.title('Topic frequency', fontsize=16)
 plt.ylim(bottom=min(frequencies)/5)
 plt.tick_params(colors='gray', direction='out')
 plt.xticks(np.arange(1,n_topics+1))
-plt.savefig("topic_population.png")
+plt.savefig("topic_population.pdf")
+plt.rcParams['font.size'] = 14
 plt.show()
 
 
-# In[ ]:
+# In[41]:
 
 
 cluster_tokens = []
@@ -204,7 +206,7 @@ for word in remove_list:
     del freq_per_topic[word]
 
 
-# In[13]:
+# In[42]:
 
 
 #make a shorter version of termlist with only the most informative words
@@ -212,7 +214,7 @@ termlist_stripped = [word for word in termlist if word in freq_per_topic.keys()]
 len(termlist_stripped)
 
 
-# In[14]:
+# In[90]:
 
 
 # Plot the term frequencies per topic
@@ -229,23 +231,23 @@ for topic in range(n_topics):
 
     for bar in plot:
         height = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width() / 2.0, height, topic+1, ha='center', va='bottom', color='gray', fontsize=7)
+        plt.text(bar.get_x() + bar.get_width() / 2.0, height, topic+1, ha='center', va='bottom', color='gray', fontsize=8)
 
 
-plt.xlabel('Relevant terms')
-plt.ylabel('% occurence')
-plt.title('Term Frequency by Topic')
-plt.xticks(term + width * (n_topics -1) / 2, termlist_stripped, fontname='Arial', fontsize=9)
-plt.legend(range(1,n_topics+1))
+plt.xlabel('Relevant terms', fontsize=17)
+plt.ylabel('% occurence', fontsize=17)
+plt.legend(range(1,n_topics+1), loc='upper right', fontsize=14)
+#plt.title('Term Frequency by Topic')
 
+plt.xticks(term + width * (n_topics -1) / 2, termlist_stripped, fontname='Arial', rotation=80, fontsize=16)
+plt.tick_params(axis='both', length=5, width=1, colors='gray', direction='out', bottom=True, left=True, size=5)
+plt.subplots_adjust(bottom=0.3)
 
-plt.tick_params(axis='both', length=5, width=1, colors='gray', direction='out', bottom=True, left=True)
-plt.xticks(rotation=65)
-plt.savefig("term_frequency.png")
+plt.savefig("term_frequency.pdf")
 plt.show()
 
 
-# In[15]:
+# In[124]:
 
 
 #initialize empty matrices
@@ -259,13 +261,14 @@ for i in range(5):
         #jaccard similarity = 1- jaccard distance
         jaccard_coef[i][j] = round(1 - jaccard_distance(set(clusters[i+1]), set(clusters[j+1])),2)
         #clusters -> dict where {n_topic : [tweetIDs]}
-        edge_labels[(i,j)] = jaccard_coef[i][j] # dict where {(topici, topicj): coef}
+        if i < j:
+            edge_labels[(i,j)] = jaccard_coef[i][j] # dict where {(topici, topicj): coef}
         for tweet_id in clusters[i+1]:
             if tweet_id in clusters[j+1]:
                 co_occurrence_matrix[i][j] += 1 #increase co-occurence score
 
 
-# In[16]:
+# In[125]:
 
 
 #Dataframe conversions
@@ -281,7 +284,7 @@ co_occurence_df.to_csv("support_weights.csv")
 jaccard_df.to_csv("jaccard.csv")
 
 
-# In[17]:
+# In[126]:
 
 
 co_occurence_df
@@ -293,22 +296,23 @@ co_occurence_df
 jaccard_df
 
 
-# In[42]:
+# In[157]:
 
 
 #Network Graph
 # create graph object from co-occurence matrix
-graph = nx.from_numpy_array(np.array(co_occurrence_matrix))
+graph = nx.from_numpy_array(np.array(jaccard_coef))
 node_labels = {0: 'healthcare', 1:'coping', 2:'testing', 3:'death rates', 4:'socio-politics'}
 layout = nx.kamada_kawai_layout(graph)
 
-#plot topic nodes close to each other according to their co-occurence
-nx.draw(graph, layout, with_labels=True, labels=node_labels, node_size=400, node_color='#468499', edge_color='lightgray')
+#plot topic nodes close to each other according to their jaccard score
+nx.draw(graph, layout, with_labels=True, labels=node_labels, node_size=400, node_color='#468499', edge_color='lightgray', font_size=14)
 
-#add the jaccard coef to the edges of each pair of topics
-nx.draw_networkx_edge_labels(graph, layout, edge_labels=edge_labels)
-plt.title("Topic overlap complemented with jaccard coeff")
-plt.savefig("topic_overlap.png")
+#add the jaccard labels
+nx.draw_networkx_edge_labels(graph, layout, edge_labels=edge_labels, label_pos=0.57, font_size=12)
+
+#plt.title("Topic overlap complemented with jaccard coeff")
+plt.savefig("topic_overlap.pdf")
 plt.show()
 
 
