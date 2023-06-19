@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-# In[115]:
+# In[2]:
 
 
 #Load FCM weights
@@ -29,7 +29,7 @@ w0 = np.asarray(w0_rounded)
 print(w0)
 
 
-# In[116]:
+# In[3]:
 
 
 #Define Transfer function and Reasoning Rule
@@ -53,7 +53,7 @@ def reasoning(W, A, T=50, phi=0.8, function=rescaled):
     return states
 
 
-# In[117]:
+# In[6]:
 
 
 #Discretize the continuous activations
@@ -69,10 +69,11 @@ def act(degree):
     return activation[degree]
 
 
-# In[152]:
+# In[109]:
 
 
 #main simulations function
+fontsize = 20
 def simulation(activations=[0,0,0,0,0], f=rescaled, w0=w0,
                k=20, phi_values=[0.2,0.6,0.8,1.0],
                reps=1, name='fig'):
@@ -97,7 +98,7 @@ def simulation(activations=[0,0,0,0,0], f=rescaled, w0=w0,
     :return: a matplotlib figure containing 4 subplots. One simulation plot for every value of phi. a file of the figure is also saved in the current directory
     """
 
-    fig, ax= plt.subplots(2, 2, figsize=(14, 8))
+    fig, ax= plt.subplots(2, 2, sharex=True, sharey=True, figsize=(14, 6))
     grid = [ax[0,0], ax[0,1], ax[1,0], ax[1,1]]
 
     for i in range(len(phi_values)):
@@ -120,12 +121,12 @@ def simulation(activations=[0,0,0,0,0], f=rescaled, w0=w0,
                 data_topic5 = state[0,:,4]
 
                 data_topics = [data_topic1, data_topic2, data_topic3, data_topic4, data_topic5]
-                topic_names = ['Healthcare', 'Coping Mechanisms', 'Testing', 'Death rates', 'Sociopolitics']
+                topic_names = ['Healthcare', 'Coping', 'Testing', 'Death rates', 'Sociopolitics']
                 df_per_topic = []
 
                 #store the update steps of each feature at each iteration
                 for topic_id in range(len(activations)):
-                    dft = pd.DataFrame(columns=["feature","iteration","value"])
+                    dft = pd.DataFrame(columns=["feature","iteration","activation"])
                     data_topic = data_topics[topic_id]
                     dft["iteration"] = range(len(data_topic))
                     dft["value"] = data_topic.tolist()
@@ -138,22 +139,26 @@ def simulation(activations=[0,0,0,0,0], f=rescaled, w0=w0,
                 df = pd.concat(concatenate, ignore_index=True)
 
         #plot
-        ax1 = sns.lineplot(data=df, x="iteration", y="value", hue="feature", ax=grid[i], linewidth = 2.5, marker='o', errorbar='sd')
+        ax1 = sns.lineplot(data=df, x="iteration", y="value", hue="feature", ax=grid[i],
+                           linewidth = 2.5, marker='o', markeredgecolor='None', errorbar='sd')
         ax1.xaxis.get_major_locator().set_params(integer=True)
 
-        grid[i].set_title('phi=' + str(phi_values[i]))
-        grid[i].set_ylabel(None)
-        grid[i].set_xlabel(None)
-
-        grid[i].set_ylim([0, 1])
-        ax1.legend(loc='upper right', fontsize='medium')
-        plt.ylim(0, 1)
-
-        fig.tight_layout()
-        plt.savefig(f"{name}.pdf")
+        ax1.set_title('phi=' + str(phi_values[i]), fontsize=fontsize)
+        ax1.set_xlabel('iteration', fontsize=fontsize)
+        ax1.set_ylabel('activation', fontsize=fontsize)
+        ax1.set_ylim([0, 1])
+        ax1.legend().remove()
 
 
-# In[148]:
+    plt.xticks(fontsize=fontsize)
+    handles, labels = ax[0, 0].get_legend_handles_labels()
+    fig.legend(handles, labels, ncol = 5, loc='upper center', fontsize=fontsize)
+    fig.tight_layout(rect=[0, 0.03, 1, 0.90], h_pad=0.5)
+    sns.despine()
+    plt.savefig(f"{name}.pdf")
+
+
+# In[162]:
 
 
 #Activating Topic 1 with high activation values
@@ -161,7 +166,7 @@ activations = [act(high), act(low), act(low), act(low), act(low)]
 simulation(activations=activations, name='actTopic1')
 
 
-# In[149]:
+# In[130]:
 
 
 #Activating Topic 3 with high activation values
@@ -169,7 +174,7 @@ activations = [act(low), act(low), act(high), act(low), act(low)]
 simulation(activations=activations, name='actTopic3')
 
 
-# In[153]:
+# In[148]:
 
 
 #Activating Topics  5 with high activation values
@@ -179,7 +184,7 @@ simulation(activations=activations, name='actTopic5')
 
 # ## Randomized activations
 
-# In[154]:
+# In[163]:
 
 
 simulation(reps=50, name='actRandom')
@@ -187,7 +192,7 @@ simulation(reps=50, name='actRandom')
 
 # ## phi=1: Presence Proportions
 
-# In[26]:
+# In[7]:
 
 
 # Topic labels
@@ -197,8 +202,8 @@ sizes = [0.097, 0.475, 0.28, 0.81, 0.15]
 colors = ['#468499','#6C9DB6','#8BAFCC','#A9CDDF','#C7DFE9']
 
 # Create a pie chart of the topic's presence for phi=1
-plt.pie(sizes, labels=labels, autopct='%1.1f%%', colors=colors)
+plt.pie(sizes, labels=labels, autopct='%1.1f%%', colors=colors, textprops={'fontsize': 13})
 #plt.title('Topic domination in the fixed-point attractor')
-plt.savefig("topic_domination.png")
+plt.savefig("topic_domination.pdf")
 plt.show()
 
