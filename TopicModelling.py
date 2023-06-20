@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[2]:
 
 
 #Import needed modules
@@ -9,6 +9,7 @@ import json
 import numpy as np
 import pandas as pd
 import random
+import os
 import matplotlib.pyplot as plt
 
 from gensim import corpora
@@ -261,8 +262,6 @@ for i in range(5):
         #jaccard similarity = 1- jaccard distance
         jaccard_coef[i][j] = round(1 - jaccard_distance(set(clusters[i+1]), set(clusters[j+1])),2)
         #clusters -> dict where {n_topic : [tweetIDs]}
-        if i < j:
-            edge_labels[(i,j)] = jaccard_coef[i][j] # dict where {(topici, topicj): coef}
         for tweet_id in clusters[i+1]:
             if tweet_id in clusters[j+1]:
                 co_occurrence_matrix[i][j] += 1 #increase co-occurence score
@@ -296,26 +295,6 @@ co_occurence_df
 jaccard_df
 
 
-# In[157]:
-
-
-#Network Graph
-# create graph object from co-occurence matrix
-graph = nx.from_numpy_array(np.array(jaccard_coef))
-node_labels = {0: 'healthcare', 1:'coping', 2:'testing', 3:'death rates', 4:'socio-politics'}
-layout = nx.kamada_kawai_layout(graph)
-
-#plot topic nodes close to each other according to their jaccard score
-nx.draw(graph, layout, with_labels=True, labels=node_labels, node_size=400, node_color='#468499', edge_color='lightgray', font_size=14)
-
-#add the jaccard labels
-nx.draw_networkx_edge_labels(graph, layout, edge_labels=edge_labels, label_pos=0.57, font_size=12)
-
-#plt.title("Topic overlap complemented with jaccard coeff")
-plt.savefig("topic_overlap.pdf")
-plt.show()
-
-
 # ## Association Rule Mining
 
 # In[26]:
@@ -336,4 +315,40 @@ confidence_df.columns = range(1, confidence_df.shape[1] + 1) #rename columns to 
 confidence_df.index = range(1, confidence_df.shape[0] + 1)  #rename rows to match cluster names
 confidence_df.to_csv("confidence_weights.csv")
 confidence_df
+
+
+# In[53]:
+
+
+#Network Graph
+# create graph object from confidence matrix
+
+#load the weights
+path = os.getcwd() + "/confidence_weights.csv"
+weights = pd.read_csv(path)
+weights = weights.drop(['Unnamed: 0'], axis=1)
+weights = np.asarray(weights)
+#round the weights for readability
+weights = [[round(element, 2) for element in row] for row in weights]
+#convert to array
+weights = np.asarray(weights)
+
+edge_labels = {}
+for i in range(5):
+    for j in range(5):
+        edge_labels[(i,j)] = weights[j][i] # dict where {(topici, topicj): coef}
+
+graph = nx.from_numpy_array(weights)
+node_labels = {0: 'healthcare', 1:'coping', 2:'testing', 3:'death rates', 4:'socio-politics'}
+layout = nx.spring_layout(graph)
+
+#plot topic nodes close to each other according to their jaccard score
+nx.draw(graph, layout, with_labels=True, labels=node_labels, node_size=400, node_color='#468499', edge_color='lightgray', font_size=14)
+
+#add the jaccard labels
+nx.draw_networkx_edge_labels(graph, layout, edge_labels=edge_labels, label_pos=0.25, font_size=11)
+
+#plt.title("Topic overlap complemented with jaccard coeff")
+plt.savefig("network.pdf")
+plt.show()
 
