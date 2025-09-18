@@ -1,8 +1,5 @@
 # FCM-Topic-Modelling
-Code for the bachelor thesis of Maria Mouratidi, for the program of Cognitive Science snd Artificial Intelligence at Tilburg University. Spring Semester 2023.
-
-All content presented in this work is my original creation, and I hold the rights to it. Any form of plagiarism or unauthorized use of this work is strictly prohibited. Proper citations and references have been provided for external sources used. 
-
+Code for my Bachelor Thesis for the program of Cognitive Science snd Artificial Intelligence at Tilburg University. Spring Semester 2023.
 
 ### Abstract
 
